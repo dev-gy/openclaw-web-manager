@@ -2,8 +2,11 @@ node_modules/
 dist/
 data/
 .env
+.env.*
 *.db
 *.db-journal
 *.db-wal
 .DS_Store
-.claude/worktrees/
+.claude/
+.playwright-mcp/
+setup-complete.png

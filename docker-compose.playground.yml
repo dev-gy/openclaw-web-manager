@@ -1,0 +1,23 @@
+# ============================================================
+# OWM Playground — 직접 설치 체험용
+# ============================================================
+#
+# 사용법:
+#   docker compose -f docker-compose.playground.yml up -d --build
+#   → 브라우저: http://localhost:7681
+#   → 터미널에서: cat ~/INSTALL.md
+#
+
+services:
+  playground:
+    build:
+      context: .
+      dockerfile: Dockerfile.playground
+    container_name: owm-playground
+    ports:
+      - "7681:7681"     # 웹 터미널
+      - "3000:3000"     # OWM (설치 후)
+      - "18789:18789"   # Gateway (설치 후)
+    environment:
+      - TERM=xterm-256color
+    restart: unless-stopped

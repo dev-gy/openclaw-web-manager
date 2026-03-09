@@ -1,0 +1,13 @@
+{
+  "name": "openclaw",
+  "version": "0.2.0",
+  "description": "OpenClaw AI Agent Gateway",
+  "type": "module",
+  "bin": {
+    "openclaw": "./cli.js"
+  },
+  "main": "gateway.js",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

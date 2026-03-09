@@ -1,0 +1,16 @@
+{
+  "name": "@openclaw/create-app",
+  "version": "0.1.0",
+  "description": "Create an OpenClaw Web Manager instance",
+  "bin": {
+    "create-openclaw-app": "./index.mjs"
+  },
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["openclaw", "ai-agent", "web-manager", "installer"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-gy/openclaw-web-manager.git",
+    "directory": "packages/create-app"
+  }
+}

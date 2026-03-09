@@ -1,12 +1,13 @@
 # 🐾 OpenClaw Web Manager (OWM)
 
-OpenClaw을 원격에서 손쉽게 설치, 설정, 모니터링할 수 있는 웹 기반 관리 프로그램.
+OpenClaw을 로컬에서 손쉽게 설치, 설정, 모니터링할 수 있는 웹 기반 관리 프로그램.
 
 ## Tech Stack
 
 - **Frontend**: Vike + React 19 + Tailwind CSS v4
-- **Backend**: Fastify 5 + WebSocket + ssh2
-- **Database**: SQLite (better-sqlite3)
+- **Backend**: Fastify 5 + WebSocket
+- **Database**: SQLite (sql.js)
+- **Process Management**: systemd / direct child_process (환경 자동 감지)
 
 ## Quick Start
 
@@ -23,10 +24,11 @@ Open http://localhost:3000
 pages/           Vike file-based routing
 server/          Fastify backend
   routes/        REST API + WebSocket endpoints
-  services/      GatewayClient, SSHManager
+  services/      ProcessManager, LocalInstaller, GatewayClient, EnvDetect
   db/            SQLite schema
 components/      Shared React components
-hooks/           Custom React hooks (useWebSocket, useGatewayRpc, useAuth)
+  ui/            UI 컴포넌트 라이브러리
+hooks/           Custom React hooks (useWebSocket, useGatewayRpc, useProcessStatus)
 layouts/         Layout components (Sidebar)
 styles/          Tailwind CSS
 ```

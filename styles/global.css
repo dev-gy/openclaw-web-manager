@@ -1,24 +1,142 @@
 @import "tailwindcss";
 
+/* Class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light mode (default) */
+:root {
+  --owm-bg-primary: #FFFFFF;
+  --owm-bg-secondary: #F8F9FA;
+  --owm-bg-card: #FFFFFF;
+  --owm-bg-card-hover: #F3F4F6;
+  --owm-text-primary: #111827;
+  --owm-text-secondary: #6B7280;
+  --owm-border: #E5E7EB;
+  --owm-accent: #4F46E5;
+  --owm-accent-hover: #4338CA;
+  --owm-success: #16A34A;
+  --owm-warning: #D97706;
+  --owm-error: #DC2626;
+  --owm-info: #2563EB;
+}
+
+/* Dark mode */
+.dark {
+  --owm-bg-primary: #0F1117;
+  --owm-bg-secondary: #1A1D27;
+  --owm-bg-card: #1E2130;
+  --owm-bg-card-hover: #282B3A;
+  --owm-text-primary: #F0F0F0;
+  --owm-text-secondary: #8B8FA3;
+  --owm-border: #2E3348;
+  --owm-accent: #6366F1;
+  --owm-accent-hover: #818CF8;
+  --owm-success: #22C55E;
+  --owm-warning: #F59E0B;
+  --owm-error: #EF4444;
+  --owm-info: #3B82F6;
+}
+
 @theme {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-secondary: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-surface: #1e1e2e;
-  --color-surface-alt: #181825;
-  --color-surface-hover: #313244;
-  --color-border: #45475a;
-  --color-text: #cdd6f4;
-  --color-text-muted: #a6adc8;
-  --color-text-bright: #f5f5f5;
+  --color-bg-primary: var(--owm-bg-primary);
+  --color-bg-secondary: var(--owm-bg-secondary);
+  --color-card: var(--owm-bg-card);
+  --color-card-hover: var(--owm-bg-card-hover);
+  --color-text-primary: var(--owm-text-primary);
+  --color-text-secondary: var(--owm-text-secondary);
+  --color-border: var(--owm-border);
+  --color-accent: var(--owm-accent);
+  --color-accent-hover: var(--owm-accent-hover);
+  --color-success: var(--owm-success);
+  --color-warning: var(--owm-warning);
+  --color-error: var(--owm-error);
+  --color-info: var(--owm-info);
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 body {
-  background-color: var(--color-surface-alt);
-  color: var(--color-text);
+  background-color: var(--owm-bg-primary);
+  color: var(--owm-text-primary);
   font-family: var(--font-sans);
+}
+
+/* ─── 에이전트 아바타 애니메이션 ─── */
+
+@keyframes agent-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes agent-working {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-1px) scale(1.02); }
+  75% { transform: translateY(0) scale(0.98); }
+}
+
+@keyframes agent-speaking {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes agent-tool {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(-3deg); }
+  20% { transform: rotate(3deg); }
+  30% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes agent-error {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3) saturate(1.5); }
+}
+
+@keyframes agent-arm {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-agent-idle {
+  animation: agent-idle 3s ease-in-out infinite;
+}
+
+.animate-agent-working {
+  animation: agent-working 1.2s ease-in-out infinite;
+}
+
+.animate-agent-speaking {
+  animation: agent-speaking 0.8s ease-in-out infinite;
+}
+
+.animate-agent-tool {
+  animation: agent-tool 2s ease-in-out infinite;
+}
+
+.animate-agent-error {
+  animation: agent-error 1.5s ease-in-out infinite;
+}
+
+.animate-agent-arm {
+  animation: agent-arm 0.6s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float-y 3s ease-in-out infinite;
+}
+
+/* Sprint-002: 말풍선 등장 애니메이션 */
+@keyframes speech-bubble-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.animate-speech-bubble-in {
+  animation: speech-bubble-in 200ms ease-out forwards;
 }

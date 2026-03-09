@@ -1,62 +1,65 @@
 import type { FastifyPluginAsync } from 'fastify'
-import { SSHManager } from '../services/ssh-manager.js'
+import { detectEnvironment } from '../services/env-detect.js'
+import { LocalInstaller, type LocalInstallConfig } from '../services/local-installer.js'
 
 const installRoutes: FastifyPluginAsync = async (fastify) => {
-  // POST /api/install/start
+  fastify.addHook('preHandler', fastify.requireAuth)
+
+  // GET /api/install/environment — 환경 정보 반환
+  fastify.get('/environment', async () => {
+    const env = await detectEnvironment()
+    return env
+  })
+
+  // POST /api/install/start — 로컬 설치 파이프라인 시작 (비동기)
   fastify.post('/start', async (request, reply) => {
-    const { host, port, username, authType, password, privateKey } = request.body as {
-      host: string
-      port: number
-      username: string
-      authType: 'password' | 'key'
-      password?: string
-      privateKey?: string
+    const config = request.body as LocalInstallConfig
+
+    // 검증
+    if (!config.serverName) {
+      config.serverName = 'localhost'
+    }
+    if (!config.gatewayPort) {
+      config.gatewayPort = 18789
+    }
+    if (!config.gatewayToken) {
+      return reply.status(400).send({ success: false, error: 'Gateway 토큰이 필요합니다' })
     }
 
-    try {
-      const ssh = new SSHManager({
-        host,
-        port: port || 22,
-        username,
-        ...(authType === 'password' ? { password } : { privateKey: privateKey || '' }),
-      })
+    const installer = LocalInstaller.getInstance()
 
-      await ssh.connect()
-
-      // Pre-check
-      const osInfo = await ssh.exec('cat /etc/os-release | head -3')
-      const nodeVersion = await ssh.exec('node --version 2>/dev/null || echo "not-installed"')
-      const ramInfo = await ssh.exec('free -h | head -2')
-
-      ssh.close()
-
-      return {
-        success: true,
-        precheck: {
-          os: osInfo.stdout.trim(),
-          nodeInstalled: !nodeVersion.stdout.includes('not-installed'),
-          nodeVersion: nodeVersion.stdout.trim(),
-          ram: ramInfo.stdout.trim(),
-        },
-      }
-    } catch (err: any) {
-      return reply.status(400).send({
+    if (installer.isRunning()) {
+      return reply.status(409).send({
         success: false,
-        error: err.message || 'SSH connection failed',
+        error: '설치가 이미 진행 중입니다',
+        status: installer.getStatus(),
       })
     }
+
+    // 비동기로 파이프라인 시작 (응답은 즉시 반환)
+    installer.start(config).catch((err) => {
+      fastify.log.error(`Install pipeline error: ${err.message}`)
+    })
+
+    return { success: true, message: '설치가 시작되었습니다' }
   })
 
-  // GET /api/install/status
+  // GET /api/install/status — 현재 설치 상태
   fastify.get('/status', async () => {
-    // TODO: Phase 3 — Track install pipeline state
-    return { status: 'idle' }
+    const installer = LocalInstaller.getInstance()
+    return installer.getStatus()
   })
 
-  // POST /api/install/abort
+  // POST /api/install/abort — 설치 중단
   fastify.post('/abort', async () => {
-    // TODO: Phase 3 — Abort running install
-    return { success: true }
+    const installer = LocalInstaller.getInstance()
+
+    if (!installer.isRunning()) {
+      return { success: false, message: '진행 중인 설치가 없습니다' }
+    }
+
+    installer.abort()
+    return { success: true, message: '설치가 중단되었습니다' }
   })
 }
 

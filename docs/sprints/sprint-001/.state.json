@@ -1,0 +1,9 @@
+{
+  "topic": "설치 마법사 404 페이지 빈 상태 UX",
+  "status": "completed",
+  "currentPhase": 6,
+  "retryCount": 1,
+  "completedPhases": [1, 2, "2a", 3, "4a", "4b", "4c", "5-first", "5a", "5b-fix", "5-retry", 6],
+  "startedAt": "2026-03-08T00:00:00Z",
+  "updatedAt": "2026-03-08T16:00:00Z"
+}

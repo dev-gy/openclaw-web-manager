@@ -1,0 +1,93 @@
+# ============================================================
+# OWM Playground — Ubuntu + Node.js 환경
+# 설치 방법: curl 원라이너 or git clone (선택)
+# ============================================================
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=ko_KR.UTF-8
+ENV LC_ALL=ko_KR.UTF-8
+
+# 기본 도구 + Node.js 22 + python3 (파일 서버용) 사전 설치
+RUN apt-get update && apt-get install -y \
+    curl wget git nano vim \
+    build-essential locales ca-certificates ttyd python3 \
+    && locale-gen ko_KR.UTF-8 \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp/_src
+
+# 소스 복사
+COPY package.json package-lock.json ./
+COPY gateway/ ./gateway/
+COPY server/ ./server/
+COPY pages/ ./pages/
+COPY components/ ./components/
+COPY hooks/ ./hooks/
+COPY lib/ ./lib/
+COPY layouts/ ./layouts/
+COPY styles/ ./styles/
+COPY vite.config.ts tsconfig.json ./
+COPY docker-entrypoint.sh ./
+COPY install.sh ./
+COPY INSTALL.md ./
+
+# Windows CRLF → LF 변환 (shebang 깨짐 방지)
+RUN find . -name "*.sh" -o -name "cli.js" | xargs sed -i 's/\r$//'
+
+# ──────────────────────────────────────────────
+# 배포 채널 1: Git bare repo (git clone 시뮬레이션)
+# 실제: git clone https://github.com/openclaw/web-manager.git
+# ──────────────────────────────────────────────
+RUN git init \
+    && git add -A \
+    && git -c user.email="ci@openclaw.dev" -c user.name="OpenClaw CI" \
+       commit -m "v0.1.0 — initial release" \
+    && git tag v0.1.0 \
+    && git clone --bare /tmp/_src /opt/owm-repo.git
+
+# ──────────────────────────────────────────────
+# 배포 채널 2: HTTP 파일 서버 (curl 시뮬레이션)
+# 실제: curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash
+# ──────────────────────────────────────────────
+RUN mkdir -p /opt/fileserver \
+    && cp /tmp/_src/install.sh /opt/fileserver/install.sh \
+    && chmod +x /opt/fileserver/install.sh
+
+RUN rm -rf /tmp/_src
+
+WORKDIR /root
+COPY INSTALL.md /root/INSTALL.md
+
+# 시작 스크립트: 파일서버 + ttyd
+RUN printf '#!/bin/bash\n\
+# 파일서버 (install.sh 호스팅 — GitHub raw URL 시뮬레이션)\n\
+cd /opt/fileserver && python3 -m http.server 9999 --bind 0.0.0.0 &>/dev/null &\n\
+\n\
+# 웹 터미널\n\
+exec ttyd --writable --port 7681 bash\n' > /root/entrypoint.sh && chmod +x /root/entrypoint.sh
+
+RUN printf '#!/bin/bash\n\
+echo ""\n\
+echo "=============================================="\n\
+echo "  OWM Playground — Ubuntu 24.04"\n\
+echo "=============================================="\n\
+echo "  Node.js: $(node -v)"\n\
+echo "  npm:     $(npm -v)"\n\
+echo "  OWM:     미설치"\n\
+echo ""\n\
+echo "  ── 설치 방법 (택1) ──────────────────────"\n\
+echo ""\n\
+echo "  방법 A. curl 원라이너:"\n\
+echo "    curl -fsSL http://localhost:9999/install.sh | bash"\n\
+echo ""\n\
+echo "  방법 B. git clone 수동 설치:"\n\
+echo "    cat ~/INSTALL.md"\n\
+echo ""\n' > /root/welcome.sh && chmod +x /root/welcome.sh
+
+RUN echo 'source /root/welcome.sh' >> /root/.bashrc
+
+EXPOSE 7681 3000 18789 9999
+CMD ["/root/entrypoint.sh"]

@@ -1,0 +1,22 @@
+# ============================================================
+# OpenClaw Web Manager — Docker Compose (Development)
+# ============================================================
+#
+# 사용법:
+#   docker compose -f docker-compose.dev.yml up
+#
+# 소스 볼륨 마운트 + Vite HMR으로 개발
+
+services:
+  owm:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /opt/openclaw
+    environment:
+      - NODE_ENV=development

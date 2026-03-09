@@ -1,0 +1,4 @@
+# Force LF for shell scripts and Node.js CLI
+*.sh text eol=lf
+gateway/cli.js text eol=lf
+docker-entrypoint.sh text eol=lf

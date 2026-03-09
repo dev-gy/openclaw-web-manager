@@ -1,0 +1,9 @@
+{
+  "topic": "에이전트 오피스 UI — Star-Office-UI 스타일 가상 오피스 리빌드",
+  "status": "completed",
+  "currentPhase": 6,
+  "retries": { "phase4": 0, "phase5": 0, "phase5cd": 0 },
+  "completedPhases": [1, "1g", 2, "2a", 3, "3g", 4, "4g", 5, "5a", "5c", "5d", 6],
+  "startedAt": "2026-03-08T12:00:00Z",
+  "updatedAt": "2026-03-08T15:25:00Z"
+}

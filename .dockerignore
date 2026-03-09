@@ -1,0 +1,17 @@
+node_modules
+dist
+.git
+.claude
+.playwright-mcp
+*.md
+!README.md
+!INSTALL.md
+data/
+*.db
+*.db-journal
+*.db-wal
+.DS_Store
+.env
+.env.*
+setup-complete.png
+docs/

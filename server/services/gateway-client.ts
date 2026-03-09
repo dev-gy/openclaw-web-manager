@@ -1,3 +1,4 @@
+// @ts-ignore — ws 타입 선언 없음
 import WebSocket from 'ws'
 
 interface GatewayConfig {
@@ -66,7 +67,7 @@ export class GatewayClient {
         resolve()
       })
 
-      this.ws.on('message', (data) => {
+      this.ws.on('message', (data: WebSocket.Data) => {
         try {
           const msg = JSON.parse(data.toString())
           if (msg.id && this.pendingRpcs.has(msg.id)) {
@@ -89,7 +90,7 @@ export class GatewayClient {
         this._scheduleReconnect()
       })
 
-      this.ws.on('error', (err) => {
+      this.ws.on('error', (err: Error) => {
         this.connected = false
         console.error('[GatewayClient] Error:', err.message)
         if (!this.connected) {

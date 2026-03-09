@@ -1,71 +1,71 @@
 import React, { useState } from 'react'
+import { Button, Input, Alert } from '../../components/ui'
 
 export default function Page() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
 
-    if (res.ok) {
-      window.location.href = '/'
-    } else {
-      const data = await res.json()
-      setError(data.message || 'Login failed')
+      if (res.ok) {
+        window.location.href = '/'
+      } else {
+        const data = await res.json()
+        setError(data.message || '로그인에 실패했습니다')
+      }
+    } catch {
+      setError('네트워크 오류가 발생했습니다')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen -m-6">
-      <div className="w-full max-w-sm bg-surface rounded-xl border border-border p-8">
+      <div className="w-full max-w-sm bg-card rounded-xl border border-border p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-text-bright">🐾 OWM</h1>
-          <p className="text-sm text-text-muted mt-1">OpenClaw Web Manager</p>
+          <h1 className="text-2xl font-bold text-text-primary">OWM</h1>
+          <p className="text-sm text-text-secondary mt-1">OpenClaw Web Manager</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 bg-danger/10 border border-danger/30 rounded-lg text-sm text-danger">
+            <Alert variant="error" dismissible onDismiss={() => setError('')}>
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div>
-            <label className="block text-sm text-text-muted mb-1">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 bg-surface-alt border border-border rounded-lg text-text focus:border-primary focus:outline-none"
-              required
-            />
-          </div>
+          <Input
+            label="사용자 이름"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
 
-          <div>
-            <label className="block text-sm text-text-muted mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-surface-alt border border-border rounded-lg text-text focus:border-primary focus:outline-none"
-              required
-            />
-          </div>
+          <Input
+            label="비밀번호"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-          <button
-            type="submit"
-            className="w-full py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Login
-          </button>
+          <Button type="submit" className="w-full" loading={loading}>
+            로그인
+          </Button>
         </form>
       </div>
     </div>

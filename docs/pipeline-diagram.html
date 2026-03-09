@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>OWM Sprint Pipeline - 3계층 검증 아키텍처</title>
+<style>
+  body { margin: 0; background: #fff; font-family: 'Segoe UI', sans-serif; }
+  svg { display: block; margin: 20px auto; }
+  .phase-box { rx: 8; ry: 8; }
+  .gate-diamond { }
+  .label { font-size: 13px; font-weight: 500; }
+  .sublabel { font-size: 11px; fill: #666; }
+  .detail-text { font-size: 11px; font-family: 'Consolas', monospace; }
+  .pass-arrow { stroke: #2f9e44; stroke-width: 2; fill: none; marker-end: url(#arrowGreen); }
+  .fail-arrow { stroke: #e03131; stroke-width: 1.5; fill: none; stroke-dasharray: 6 3; marker-end: url(#arrowRed); }
+  .flow-arrow { stroke: #495057; stroke-width: 2; fill: none; marker-end: url(#arrowBlack); }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1100 1380" width="1100" height="1380" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowBlack" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#495057"/></marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2f9e44"/></marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#e03131"/></marker>
+    <marker id="arrowOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#e8590c"/></marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="35" text-anchor="middle" font-size="22" font-weight="bold" fill="#1e1e1e">OWM Sprint Pipeline - 3계층 검증 아키텍처</text>
+
+  <!-- Layer 1: Hook bar -->
+  <rect x="60" y="55" width="980" height="55" rx="6" fill="#ffe3e3" stroke="#e03131" stroke-width="2"/>
+  <text x="80" y="78" font-size="14" font-weight="bold" fill="#e03131">Layer 1: Hook (결정론적 강제 — LLM 우회 불가)</text>
+  <text x="80" y="98" class="detail-text" fill="#c92a2a">stop-gate.mjs → TS/TSX 변경 시 tsc --noEmit 통과 전까지 Claude 멈출 수 없음 (exit 2) → .state.json에 자동 기록</text>
+
+  <!-- Phase 1 -->
+  <rect x="80" y="140" width="240" height="70" class="phase-box" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
+  <text x="200" y="165" text-anchor="middle" class="label" fill="#1971c2">Phase 1: 유저분석 + 기획</text>
+  <text x="200" y="182" text-anchor="middle" class="sublabel">PLANNER</text>
+  <text x="200" y="198" text-anchor="middle" class="sublabel">→ 00-plan.md, 01-spec.md</text>
+
+  <!-- Arrow P1 → G1 -->
+  <line x1="320" y1="175" x2="380" y2="175" class="flow-arrow"/>
+
+  <!-- Gate 1g -->
+  <polygon points="440,175 400,150 440,125 480,150" fill="#fff4e6" stroke="#e8590c" stroke-width="2"/>
+  <text x="440" y="153" text-anchor="middle" font-size="11" font-weight="bold" fill="#e8590c">1g</text>
+  <text x="440" y="167" text-anchor="middle" font-size="9" fill="#e8590c">스펙품질</text>
+
+  <!-- FAIL loop back -->
+  <path d="M 420,125 C 420,110 200,100 200,140" class="fail-arrow"/>
+  <text x="300" y="108" text-anchor="middle" font-size="10" fill="#e03131">FAIL: 모호표현</text>
+
+  <!-- PASS down -->
+  <line x1="480" y1="150" x2="530" y2="150" class="pass-arrow"/>
+  <text x="500" y="145" font-size="10" fill="#2f9e44">PASS</text>
+  <path d="M 530,150 L 530,245 L 80,245" class="pass-arrow"/>
+
+  <!-- Phase 2 -->
+  <rect x="80" y="230" width="240" height="70" class="phase-box" fill="#f3d9fa" stroke="#862e9c" stroke-width="2"/>
+  <text x="200" y="255" text-anchor="middle" class="label" fill="#862e9c">Phase 2: 비평</text>
+  <text x="200" y="272" text-anchor="middle" class="sublabel">CRITIC (01-spec.md만 — 기획의도 모름)</text>
+  <text x="200" y="288" text-anchor="middle" class="sublabel">→ 02-review.md ([근거:] 필수)</text>
+
+  <!-- Arrow P2 → G2 -->
+  <line x1="320" y1="265" x2="380" y2="265" class="flow-arrow"/>
+
+  <!-- Gate 2a -->
+  <polygon points="440,265 400,240 440,215 480,240" fill="#fff4e6" stroke="#e8590c" stroke-width="2"/>
+  <text x="440" y="243" text-anchor="middle" font-size="11" font-weight="bold" fill="#e8590c">2a</text>
+  <text x="440" y="257" text-anchor="middle" font-size="9" fill="#e8590c">비평품질</text>
+
+  <!-- PASS down -->
+  <path d="M 480,240 L 530,240 L 530,335 L 80,335" class="pass-arrow"/>
+
+  <!-- Phase 3 -->
+  <rect x="80" y="320" width="240" height="70" class="phase-box" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
+  <text x="200" y="345" text-anchor="middle" class="label" fill="#1971c2">Phase 3: 스펙수정 + UI설계</text>
+  <text x="200" y="362" text-anchor="middle" class="sublabel">PLANNER (비평 반영)</text>
+  <text x="200" y="378" text-anchor="middle" class="sublabel">→ 03-spec-revised.md</text>
+
+  <!-- Arrow P3 → G3 -->
+  <line x1="320" y1="355" x2="380" y2="355" class="flow-arrow"/>
+
+  <!-- Gate 3g -->
+  <polygon points="440,355 400,330 440,305 480,330" fill="#fff4e6" stroke="#e8590c" stroke-width="2"/>
+  <text x="440" y="333" text-anchor="middle" font-size="11" font-weight="bold" fill="#e8590c">3g</text>
+  <text x="440" y="347" text-anchor="middle" font-size="9" fill="#e8590c">반영확인</text>
+
+  <!-- FAIL loop back to P3 -->
+  <path d="M 420,305 C 420,290 200,285 200,320" class="fail-arrow"/>
+  <text x="300" y="293" text-anchor="middle" font-size="10" fill="#e03131">FAIL: CRIT 누락</text>
+
+  <!-- PASS down -->
+  <path d="M 480,330 L 530,330 L 530,425 L 80,425" class="pass-arrow"/>
+
+  <!-- Phase 4 -->
+  <rect x="80" y="410" width="240" height="70" class="phase-box" fill="#c3fae8" stroke="#087f5b" stroke-width="2"/>
+  <text x="200" y="435" text-anchor="middle" class="label" fill="#087f5b">Phase 4: 구현</text>
+  <text x="200" y="452" text-anchor="middle" class="sublabel">FE_DEV / BE_DEV</text>
+  <text x="200" y="468" text-anchor="middle" class="sublabel">→ 코드 + 04-implementation.md</text>
+
+  <!-- L1 Hook arrow pointing to Phase 4 -->
+  <line x1="55" y1="82" x2="55" y2="445" stroke="#e03131" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"/>
+  <text x="12" y="280" font-size="9" fill="#e03131" transform="rotate(-90, 12, 280)">L1: tsc --noEmit 강제</text>
+
+  <!-- Arrow P4 → G4 -->
+  <line x1="320" y1="445" x2="380" y2="445" class="flow-arrow"/>
+
+  <!-- Gate 4g (larger - 2 gates) -->
+  <polygon points="450,445 400,415 450,385 500,415" fill="#fff4e6" stroke="#e8590c" stroke-width="2"/>
+  <text x="450" y="418" text-anchor="middle" font-size="11" font-weight="bold" fill="#e8590c">4g</text>
+  <text x="450" y="432" text-anchor="middle" font-size="9" fill="#e8590c">2종 게이트</text>
+
+  <!-- Gate 4 detail box -->
+  <rect x="540" y="395" width="280" height="100" rx="6" fill="#fff9db" stroke="#e8590c" stroke-width="1" opacity="0.9"/>
+  <text x="555" y="415" class="detail-text" fill="#e8590c" font-weight="bold">Gate A: 빌드 + 회귀</text>
+  <text x="555" y="432" class="detail-text" fill="#946800">  npm run build</text>
+  <text x="555" y="449" class="detail-text" fill="#946800">  (전체 프로젝트 빌드 = 회귀 동시 검증)</text>
+  <text x="555" y="469" class="detail-text" fill="#e8590c" font-weight="bold">Gate B: 범위 검증</text>
+  <text x="555" y="486" class="detail-text" fill="#946800">  git diff main...HEAD --name-only</text>
+
+  <!-- FAIL back to P4 -->
+  <path d="M 430,385 C 430,370 200,365 200,410" class="fail-arrow"/>
+  <text x="300" y="373" text-anchor="middle" font-size="10" fill="#e03131">FAIL: 빌드에러</text>
+
+  <!-- PASS down -->
+  <path d="M 500,415 L 540,415" class="pass-arrow" stroke-width="0"/>
+  <path d="M 450,445 L 450,470 L 450,535 L 80,535" class="pass-arrow"/>
+  <text x="460" y="530" font-size="10" fill="#2f9e44">PASS</text>
+
+  <!-- Phase 5: Code QA -->
+  <rect x="80" y="520" width="240" height="70" class="phase-box" fill="#e5dbff" stroke="#5f3dc4" stroke-width="2"/>
+  <text x="200" y="545" text-anchor="middle" class="label" fill="#5f3dc4">Phase 5: 코드 검증</text>
+  <text x="200" y="562" text-anchor="middle" class="sublabel">QA (체크리스트만 — 구현방법 모름)</text>
+  <text x="200" y="578" text-anchor="middle" class="sublabel">→ 05-qa-report.md</text>
+
+  <!-- Arrow P5 → G5a -->
+  <line x1="320" y1="555" x2="380" y2="555" class="flow-arrow"/>
+
+  <!-- Gate 5a -->
+  <polygon points="440,555 400,530 440,505 480,530" fill="#fff4e6" stroke="#e8590c" stroke-width="2"/>
+  <text x="440" y="533" text-anchor="middle" font-size="11" font-weight="bold" fill="#e8590c">5a</text>
+  <text x="440" y="547" text-anchor="middle" font-size="9" fill="#e8590c">QA검증</text>
+
+  <!-- 5b feedback routing box -->
+  <rect x="540" y="510" width="280" height="95" rx="6" fill="#ffe3e3" stroke="#c92a2a" stroke-width="1" opacity="0.9"/>
+  <text x="555" y="528" class="detail-text" fill="#c92a2a" font-weight="bold">5b: 근본 원인 분류 (PM)</text>
+  <text x="555" y="545" class="detail-text" fill="#862e9c">  구현버그 → Phase 4 재실행</text>
+  <text x="555" y="562" class="detail-text" fill="#862e9c">  스펙모호 → Phase 3 → 4 재실행</text>
+  <text x="555" y="579" class="detail-text" fill="#862e9c">  환경문제 → PM 직접 해결</text>
+  <text x="555" y="596" class="detail-text" fill="#862e9c">  (retries.phase5: 최대 2회)</text>
+
+  <!-- Feedback arrows from 5b -->
+  <path d="M 820,545 L 870,545 L 870,445 L 320,445" class="fail-arrow"/>
+  <text x="880" y="495" font-size="10" fill="#e03131">구현버그</text>
+
+  <path d="M 820,562 L 900,562 L 900,355 L 320,355" class="fail-arrow" stroke="#e8590c"/>
+  <text x="910" y="460" font-size="10" fill="#e8590c">스펙모호</text>
+
+  <!-- PASS down to Layer 3 -->
+  <path d="M 440,555 L 440,580 L 440,640" class="pass-arrow"/>
+  <text x="448" y="622" font-size="10" fill="#2f9e44">PASS</text>
+
+  <!-- Layer 3 group -->
+  <rect x="60" y="640" width="500" height="250" rx="8" fill="#ebfbee" stroke="#2f9e44" stroke-width="2" opacity="0.5"/>
+  <text x="80" y="665" font-size="13" font-weight="bold" fill="#2f9e44">Layer 3: LLM 검증 (QA 에이전트)</text>
+
+  <!-- Phase 5c -->
+  <rect x="80" y="680" width="220" height="70" class="phase-box" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="190" y="705" text-anchor="middle" class="label" fill="#2f9e44">5c: 시각적 검증</text>
+  <text x="190" y="722" text-anchor="middle" class="sublabel">dev서버 → 스크린샷</text>
+  <text x="190" y="738" text-anchor="middle" class="sublabel">레이아웃/렌더링 + 회귀</text>
+
+  <!-- Arrow 5c → 5d -->
+  <line x1="300" y1="715" x2="330" y2="715" class="flow-arrow"/>
+
+  <!-- Phase 5d -->
+  <rect x="330" y="680" width="220" height="70" class="phase-box" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="440" y="705" text-anchor="middle" class="label" fill="#2f9e44">5d: 수용 테스트</text>
+  <text x="440" y="722" text-anchor="middle" class="sublabel">유저 시나리오 클릭스루</text>
+  <text x="440" y="738" text-anchor="middle" class="sublabel">목표 달성 확인</text>
+
+  <!-- 5e feedback box -->
+  <rect x="80" y="765" width="470" height="50" rx="6" fill="#ffe3e3" stroke="#c92a2a" stroke-width="1" opacity="0.8"/>
+  <text x="315" y="785" text-anchor="middle" class="detail-text" fill="#c92a2a">5e: FAIL → 근본 원인 분류 → 구현버그→P4 / 스펙모호→P3 (retries.phase5cd: 최대 2회)</text>
+  <text x="315" y="802" text-anchor="middle" font-size="10" fill="#862e9c">실패 항목 + 스크린샷 + 근본 원인을 DEV/PLANNER에게 전달</text>
+
+  <!-- 5e feedback arrows -->
+  <path d="M 550,790 L 920,790 L 920,445 L 320,445" class="fail-arrow" stroke-dasharray="4 3"/>
+  <path d="M 550,795 L 940,795 L 940,355 L 320,355" class="fail-arrow" stroke="#e8590c" stroke-dasharray="4 3"/>
+
+  <!-- ALL PASS arrow down -->
+  <path d="M 315,815 L 315,850 L 315,870" class="pass-arrow"/>
+  <text x="325" y="848" font-size="11" font-weight="bold" fill="#2f9e44">ALL PASS</text>
+
+  <!-- Phase 6 -->
+  <rect x="180" y="870" width="270" height="60" class="phase-box" fill="#dee2e6" stroke="#495057" stroke-width="2"/>
+  <text x="315" y="895" text-anchor="middle" class="label" fill="#495057">Phase 6: 마무리 (PM)</text>
+  <text x="315" y="915" text-anchor="middle" class="sublabel">→ 06-summary.md + decisions.md</text>
+
+  <!-- State tracking box -->
+  <rect x="600" y="660" width="280" height="170" rx="6" fill="#f8f9fa" stroke="#868e96" stroke-width="1"/>
+  <text x="615" y="682" font-size="12" font-weight="bold" fill="#495057">.state.json 상태 추적</text>
+  <text x="615" y="700" class="detail-text" fill="#666">completedPhases:</text>
+  <text x="615" y="716" class="detail-text" fill="#666">[1, "1g", 2, "2a", 3, "3g",</text>
+  <text x="620" y="732" class="detail-text" fill="#666"> 4, "4g", 5, "5a", "5c", "5d", 6]</text>
+  <text x="615" y="752" class="detail-text" fill="#666">retries:</text>
+  <text x="615" y="768" class="detail-text" fill="#666">  phase4: 0 (최대 2)</text>
+  <text x="615" y="784" class="detail-text" fill="#666">  phase5: 0 (최대 2)</text>
+  <text x="615" y="800" class="detail-text" fill="#666">  phase5cd: 0 (최대 2)</text>
+  <text x="615" y="820" class="detail-text" fill="#666">오토컴팩트 복구: 이 파일로 재개</text>
+
+  <!-- Legend -->
+  <rect x="60" y="960" width="880" height="170" rx="8" fill="#f8f9fa" stroke="#868e96" stroke-width="1"/>
+  <text x="80" y="985" font-size="15" font-weight="bold" fill="#1e1e1e">범례</text>
+
+  <rect x="80" y="1000" width="18" height="18" fill="#ffe3e3" stroke="#e03131" stroke-width="1"/>
+  <text x="106" y="1014" font-size="12" fill="#1e1e1e">Layer 1: Hook (결정론적 강제, LLM 우회 불가) — stop-gate.mjs</text>
+
+  <polygon points="89,1045 80,1035 89,1025 98,1035" fill="#fff4e6" stroke="#e8590c" stroke-width="1"/>
+  <text x="106" y="1039" font-size="12" fill="#1e1e1e">Layer 2: PM 게이트 5종 (1g, 2a, 3g, 4g, 5a) — 오케스트레이터 Bash/Grep 직접 실행</text>
+
+  <rect x="80" y="1050" width="18" height="18" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1"/>
+  <text x="106" y="1064" font-size="12" fill="#1e1e1e">Layer 3: LLM 검증 (5c 시각적, 5d 수용) — QA 에이전트가 브라우저에서 직접 확인</text>
+
+  <line x1="80" y1="1088" x2="120" y2="1088" stroke="#2f9e44" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="130" y="1092" font-size="12" fill="#1e1e1e">PASS → 다음 Phase 진행</text>
+
+  <line x1="80" y1="1108" x2="120" y2="1108" stroke="#e03131" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrowRed)"/>
+  <text x="130" y="1112" font-size="12" fill="#1e1e1e">FAIL → 근본 원인 분류 후 해당 Phase 재시도 (단계별 최대 2회)</text>
+
+  <!-- Context separation -->
+  <rect x="500" y="960" width="430" height="170" rx="6" fill="transparent" stroke="transparent"/>
+  <text x="520" y="985" font-size="13" font-weight="bold" fill="#495057">컨텍스트 분리 (독립 검증 보장)</text>
+  <text x="520" y="1006" font-size="11" fill="#666">CRITIC  ← 01-spec.md만 (기획 의도 모름)</text>
+  <text x="520" y="1023" font-size="11" fill="#666">FE_DEV ← 03-spec만 (비평 과정 모름)</text>
+  <text x="520" y="1040" font-size="11" fill="#666">QA(코드) ← 체크리스트만 (구현 방법 모름)</text>
+  <text x="520" y="1057" font-size="11" fill="#666">QA(시각) ← 화면 기대상태 + 실제 브라우저</text>
+  <text x="520" y="1074" font-size="11" fill="#666">QA(수용) ← 수용 기준 + 유저 플로우 재현</text>
+  <text x="520" y="1098" font-size="11" font-weight="bold" fill="#495057">→ 이전 단계의 "의도"를 전달하지 않아야</text>
+  <text x="525" y="1115" font-size="11" font-weight="bold" fill="#495057">  독립적 검증이 가능하다</text>
+</svg>
+</body>
+</html>
