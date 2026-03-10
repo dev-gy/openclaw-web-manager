@@ -1,6 +1,40 @@
 # OWM (OpenClaw Web Manager) 설치 가이드
 
-## 방법 A. curl 원라이너 (가장 간편)
+## 방법 A. Docker One-liner (Grafana 스타일)
+
+```bash
+docker run -d --name owm-server \
+  -p 3000:3000 \
+  -e OWM_COOKIE_SECRET='replace-with-long-random-secret' \
+  -e OWM_ADMIN_PASS='replace-admin-password' \
+  -v owm-data:/app/data \
+  ghcr.io/dev-gy/openclaw-web-manager:latest
+```
+
+로그/상태:
+
+```bash
+docker logs -f owm-server
+docker ps | grep owm-server
+curl http://127.0.0.1:3000/api/health
+```
+
+업데이트:
+
+```bash
+docker pull ghcr.io/dev-gy/openclaw-web-manager:latest
+docker rm -f owm-server
+docker run -d --name owm-server \
+  -p 3000:3000 \
+  -e OWM_COOKIE_SECRET='replace-with-long-random-secret' \
+  -e OWM_ADMIN_PASS='replace-admin-password' \
+  -v owm-data:/app/data \
+  ghcr.io/dev-gy/openclaw-web-manager:latest
+```
+
+---
+
+## 방법 B. curl 원라이너 (호스트 설치)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dev-gy/openclaw-web-manager/main/install.sh | bash
@@ -28,7 +62,7 @@ owmctl logs
 
 ---
 
-## 방법 B. npx (Node.js 프로젝트)
+## 방법 C. npx (Node.js 프로젝트)
 
 ```bash
 npx @openclaw/create-app
@@ -38,7 +72,7 @@ npx @openclaw/create-app
 
 ---
 
-## 방법 C. Docker (프로덕션 권장)
+## 방법 D. Docker Compose (소스 기반)
 
 ```bash
 curl -O https://raw.githubusercontent.com/dev-gy/openclaw-web-manager/main/docker-compose.yml
@@ -49,7 +83,7 @@ LLM API 키 추가: `ANTHROPIC_API_KEY=sk-ant-... docker compose up -d`
 
 ---
 
-## 방법 D. git clone 수동 설치
+## 방법 E. git clone 수동 설치
 
 ### 전제조건
 - Node.js 22+ / npm 10+ / git

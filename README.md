@@ -18,6 +18,26 @@ npm run dev
 
 Open http://localhost:3000
 
+## Run Like Grafana (Docker)
+
+No source clone or `cd` required once the image is published.
+
+```bash
+docker run -d --name owm-server \
+  -p 3000:3000 \
+  -e OWM_COOKIE_SECRET='replace-with-long-random-secret' \
+  -e OWM_ADMIN_PASS='replace-admin-password' \
+  -v owm-data:/app/data \
+  ghcr.io/dev-gy/openclaw-web-manager:latest
+```
+
+Check:
+
+```bash
+docker logs -f owm-server
+curl http://127.0.0.1:3000/api/health
+```
+
 ## Project Structure
 
 ```
