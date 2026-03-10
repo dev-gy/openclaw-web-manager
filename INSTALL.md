@@ -6,12 +6,25 @@
 curl -fsSL https://raw.githubusercontent.com/dev-gy/openclaw-web-manager/main/install.sh | bash
 ```
 
+권장(권한 이슈 방지):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dev-gy/openclaw-web-manager/main/install.sh | sudo bash
+```
+
 > **Playground:**
 > ```bash
 > curl -fsSL http://localhost:9999/install.sh | bash
 > ```
 
-설치 경로 변경: `INSTALL_DIR=/my/path curl -fsSL ... | bash`
+설치 경로 변경: `INSTALL_DIR=/my/path curl -fsSL ... | sudo bash`
+
+설치가 끝나면 systemd 서비스(`owm`)가 자동 등록/시작됩니다.
+
+```bash
+owmctl status
+owmctl logs
+```
 
 ---
 
@@ -65,13 +78,25 @@ OWM은 별도 관리 서버이므로, OpenClaw 실행 바이너리 설치는 필
 ### Step 4. 실행
 
 ```bash
-cd /opt/owm
-export PORT=3000 HOST=0.0.0.0
-export OWM_DB_PATH=/opt/owm/data/owm.db
-export OWM_ADMIN_PASS=admin
-export OWM_COOKIE_SECRET=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c48)
-mkdir -p data
-node dist/server/index.mjs
+cat >/etc/systemd/system/owm.service <<EOF
+[Unit]
+Description=OpenClaw Web Manager
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/owm
+EnvironmentFile=/opt/owm/.env
+ExecStart=/usr/bin/env node dist/server/index.mjs
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now owm
 ```
 
 ### Step 5. 접속
