@@ -53,11 +53,19 @@ curl -fsSL https://raw.githubusercontent.com/dev-gy/openclaw-web-manager/main/in
 
 설치 경로 변경: `INSTALL_DIR=/my/path curl -fsSL ... | sudo bash`
 
-설치가 끝나면 systemd 서비스(`owm`)가 자동 등록/시작됩니다.
+설치가 끝나면 자동으로 서비스가 등록/시작됩니다.
+- Linux: `systemd` (`owm`)
+- macOS: `launchd` (`com.openclaw.owm`)
+- Windows: 현재 비지원
 
 ```bash
+# Linux
 owmctl status
 owmctl logs
+
+# macOS (PATH 미설정 시)
+~/.local/bin/owmctl status
+~/.local/bin/owmctl logs
 ```
 
 ---

@@ -11,9 +11,24 @@ OWM_VERSION="${OWM_VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/owm}"
 REPO_URL="${OWM_REPO_URL:-https://github.com/dev-gy/openclaw-web-manager.git}"
 SERVICE_NAME="${OWM_SERVICE_NAME:-owm}"
+OS_NAME="$(uname -s)"
+IS_LINUX=0
+IS_MACOS=0
 HAS_SYSTEMD=0
-if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+HAS_LAUNCHD=0
+
+if [ "$OS_NAME" = "Linux" ]; then
+  IS_LINUX=1
+elif [ "$OS_NAME" = "Darwin" ]; then
+  IS_MACOS=1
+fi
+
+if [ "$IS_LINUX" -eq 1 ] && command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
   HAS_SYSTEMD=1
+fi
+
+if [ "$IS_MACOS" -eq 1 ] && command -v launchctl >/dev/null 2>&1; then
+  HAS_LAUNCHD=1
 fi
 
 # --- 색상 ---
@@ -23,6 +38,10 @@ info()  { echo -e "${CYAN}[OWM]${NC} $*"; }
 ok()    { echo -e "${GREEN}[OWM]${NC} ✓ $*"; }
 warn()  { echo -e "${YELLOW}[OWM]${NC} ⚠ $*"; }
 fail()  { echo -e "${RED}[OWM]${NC} ✗ $*"; exit 1; }
+
+if [ "$IS_LINUX" -eq 0 ] && [ "$IS_MACOS" -eq 0 ]; then
+  fail "지원하지 않는 OS입니다: $OS_NAME (지원: Linux, macOS)"
+fi
 
 run_as_root() {
   if [ "$(id -u)" -eq 0 ]; then
@@ -116,10 +135,18 @@ EOF
   ok ".env 생성 완료"
 else
   warn ".env 이미 존재 — 기존 설정을 유지합니다"
+  EXISTING_ADMIN_PASS="$(grep -E '^OWM_ADMIN_PASS=' "$INSTALL_DIR/.env" | tail -n1 | cut -d= -f2- || true)"
+  EXISTING_COOKIE_SECRET="$(grep -E '^OWM_COOKIE_SECRET=' "$INSTALL_DIR/.env" | tail -n1 | cut -d= -f2- || true)"
+  if [ -n "$EXISTING_ADMIN_PASS" ]; then
+    ADMIN_PASS="$EXISTING_ADMIN_PASS"
+  fi
+  if [ -n "$EXISTING_COOKIE_SECRET" ]; then
+    COOKIE_SECRET="$EXISTING_COOKIE_SECRET"
+  fi
 fi
 
 # ============================================================
-# 5. systemd 서비스 등록
+# 5. 서비스 등록/자동 시작
 # ============================================================
 if [ "$HAS_SYSTEMD" -eq 1 ]; then
   SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
@@ -187,8 +214,101 @@ EOF
   rm -f "$TMP_CTL_FILE"
   run_as_root "chmod 755 /usr/local/bin/owmctl"
   ok "관리 명령 설치 완료: owmctl"
+elif [ "$HAS_LAUNCHD" -eq 1 ]; then
+  LAUNCHD_LABEL="com.openclaw.${SERVICE_NAME}"
+  LAUNCHD_DIR="$HOME/Library/LaunchAgents"
+  LAUNCHD_FILE="$LAUNCHD_DIR/${LAUNCHD_LABEL}.plist"
+  mkdir -p "$LAUNCHD_DIR"
+
+  TMP_PLIST_FILE="$(mktemp)"
+  cat > "$TMP_PLIST_FILE" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$LAUNCHD_LABEL</string>
+  <key>WorkingDirectory</key>
+  <string>$INSTALL_DIR</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string>
+    <string>node</string>
+    <string>dist/server/index.mjs</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PORT</key>
+    <string>3000</string>
+    <key>HOST</key>
+    <string>0.0.0.0</string>
+    <key>OWM_DB_PATH</key>
+    <string>$INSTALL_DIR/data/owm.db</string>
+    <key>OWM_ADMIN_PASS</key>
+    <string>$ADMIN_PASS</string>
+    <key>OWM_COOKIE_SECRET</key>
+    <string>$COOKIE_SECRET</string>
+  </dict>
+  <key>KeepAlive</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>$INSTALL_DIR/data/owm.log</string>
+  <key>StandardErrorPath</key>
+  <string>$INSTALL_DIR/data/owm-error.log</string>
+</dict>
+</plist>
+EOF
+  cp "$TMP_PLIST_FILE" "$LAUNCHD_FILE"
+  rm -f "$TMP_PLIST_FILE"
+
+  launchctl bootout "user/$(id -u)" "$LAUNCHD_FILE" >/dev/null 2>&1 || true
+  launchctl bootstrap "user/$(id -u)" "$LAUNCHD_FILE"
+  launchctl kickstart -k "user/$(id -u)/$LAUNCHD_LABEL"
+  ok "launchd 서비스 등록 및 시작 완료: $LAUNCHD_LABEL"
+
+  TMP_CTL_FILE="$(mktemp)"
+  cat > "$TMP_CTL_FILE" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+LABEL="$LAUNCHD_LABEL"
+PLIST_FILE="$LAUNCHD_FILE"
+DOMAIN="user/\$(id -u)"
+
+case "\${1:-status}" in
+  start)
+    launchctl bootstrap "\$DOMAIN" "\$PLIST_FILE" 2>/dev/null || true
+    launchctl kickstart -k "\$DOMAIN/\$LABEL"
+    ;;
+  stop)
+    launchctl bootout "\$DOMAIN" "\$PLIST_FILE" || true
+    ;;
+  restart)
+    launchctl bootout "\$DOMAIN" "\$PLIST_FILE" || true
+    launchctl bootstrap "\$DOMAIN" "\$PLIST_FILE"
+    launchctl kickstart -k "\$DOMAIN/\$LABEL"
+    ;;
+  status)
+    launchctl print "\$DOMAIN/\$LABEL"
+    ;;
+  logs)
+    tail -f "$INSTALL_DIR/data/owm.log" "$INSTALL_DIR/data/owm-error.log"
+    ;;
+  *)
+    echo "Usage: owmctl {start|stop|restart|status|logs}"
+    exit 1
+    ;;
+esac
+EOF
+  mkdir -p "$HOME/.local/bin"
+  cp "$TMP_CTL_FILE" "$HOME/.local/bin/owmctl"
+  rm -f "$TMP_CTL_FILE"
+  chmod 755 "$HOME/.local/bin/owmctl"
+  ok "관리 명령 설치 완료: $HOME/.local/bin/owmctl"
+  warn "PATH에 ~/.local/bin 이 없으면 다음을 실행하세요: export PATH=\"\$HOME/.local/bin:\$PATH\""
 else
-  warn "systemd(systemctl)를 찾지 못했습니다. 수동 실행을 사용하세요."
+  warn "자동 서비스 등록에 필요한 systemd/launchd를 찾지 못했습니다. 수동 실행을 사용하세요."
 fi
 
 # ============================================================
@@ -204,6 +324,9 @@ echo ""
 if [ "$HAS_SYSTEMD" -eq 1 ]; then
 echo "    owmctl status"
 echo "    owmctl logs"
+elif [ "$HAS_LAUNCHD" -eq 1 ]; then
+echo "    ~/.local/bin/owmctl status"
+echo "    ~/.local/bin/owmctl logs"
 else
 echo "    cd $INSTALL_DIR && source .env && node dist/server/index.mjs"
 fi

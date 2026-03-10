@@ -30,6 +30,11 @@ docker run -d --name owm-server \
   openclaw-web-manager:local
 ```
 
+Host install policy:
+- Linux: systemd auto-start
+- macOS: launchd auto-start
+- Windows: currently unsupported
+
 ## Project Structure
 
 ```
