@@ -65,41 +65,24 @@ npm run build
 ok "OWM 빌드 완료"
 
 # ============================================================
-# 4. Gateway 설치
-# ============================================================
-info "OpenClaw Gateway 설치 중..."
-cd "$INSTALL_DIR/gateway"
-npm install --loglevel=error
-
-# CLI 심볼릭 링크
-if [ -w /usr/local/bin ]; then
-  ln -sf "$INSTALL_DIR/gateway/cli.js" /usr/local/bin/openclaw
-  chmod +x "$INSTALL_DIR/gateway/cli.js"
-  ok "openclaw CLI 설치됨: $(openclaw --version 2>/dev/null || echo 'OK')"
-else
-  warn "/usr/local/bin 쓰기 권한 없음 — sudo로 재시도"
-  sudo ln -sf "$INSTALL_DIR/gateway/cli.js" /usr/local/bin/openclaw
-  sudo chmod +x "$INSTALL_DIR/gateway/cli.js"
-  ok "openclaw CLI 설치됨 (sudo)"
-fi
-
-# ============================================================
-# 5. 초기 설정
+# 4. 초기 설정 (OWM 단독)
 # ============================================================
 mkdir -p "$INSTALL_DIR/data"
 
 cd "$INSTALL_DIR"
-GATEWAY_TOKEN=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c32 || true)
+COOKIE_SECRET=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c48 || true)
 
 cat > "$INSTALL_DIR/.env" <<EOF
 # OWM 환경 설정 (자동 생성)
-GATEWAY_TOKEN=$GATEWAY_TOKEN
-OPENCLAW_WS_URL=ws://127.0.0.1:18789
-OPENCLAW_TOKEN=$GATEWAY_TOKEN
 PORT=3000
 HOST=0.0.0.0
 OWM_DB_PATH=$INSTALL_DIR/data/owm.db
 OWM_ADMIN_PASS=admin
+OWM_COOKIE_SECRET=$COOKIE_SECRET
+
+# 선택: 자동 연결 기본값 (없어도 OWM 실행 가능)
+# OPENCLAW_WS_URL=ws://gateway-host:18789
+# OPENCLAW_TOKEN=your-gateway-token
 EOF
 
 ok ".env 생성 완료"
@@ -114,17 +97,16 @@ echo "==============================================${NC}"
 echo ""
 echo "  실행 방법:"
 echo ""
-echo "    # 1. Gateway 시작"
+echo "    # 1. OWM 서버 시작"
 echo "    source $INSTALL_DIR/.env"
-echo "    openclaw gateway --port 18789 --token \$GATEWAY_TOKEN &"
-echo ""
-echo "    # 2. OWM 서버 시작"
 echo "    cd $INSTALL_DIR"
 echo "    node dist/server/index.mjs"
 echo ""
-echo "    # 3. 접속"
+echo "    # 2. 접속"
 echo "    http://localhost:3000  (admin / admin)"
 echo ""
+echo "  이후 [서버 > 대상 서버]에서 원격 OpenClaw Gateway를 등록/연결하세요."
+echo ""
 echo "  또는 한번에:"
-echo "    cd $INSTALL_DIR && source .env && openclaw gateway --port 18789 --token \$GATEWAY_TOKEN & node dist/server/index.mjs"
+echo "    cd $INSTALL_DIR && source .env && node dist/server/index.mjs"
 echo ""

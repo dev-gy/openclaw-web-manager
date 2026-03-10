@@ -57,31 +57,19 @@ npm install
 npm run build
 ```
 
-### Step 3. OpenClaw Gateway 설치
+### Step 3. 원격 Gateway 연결 준비
 
-```bash
-cd /opt/owm/gateway
-npm install
-ln -sf /opt/owm/gateway/cli.js /usr/local/bin/openclaw
-chmod +x /usr/local/bin/openclaw
-openclaw --version
-```
+OWM은 별도 관리 서버이므로, OpenClaw 실행 바이너리 설치는 필수가 아닙니다.
+대상 서버의 Gateway에 원격 연결해서 관리합니다.
 
 ### Step 4. 실행
 
 ```bash
-export GATEWAY_TOKEN=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c32)
-
-# Gateway
-openclaw gateway --port 18789 --token "$GATEWAY_TOKEN" &
-
-# OWM 서버
 cd /opt/owm
-export OPENCLAW_WS_URL="ws://127.0.0.1:18789"
-export OPENCLAW_TOKEN="$GATEWAY_TOKEN"
 export PORT=3000 HOST=0.0.0.0
 export OWM_DB_PATH=/opt/owm/data/owm.db
 export OWM_ADMIN_PASS=admin
+export OWM_COOKIE_SECRET=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c48)
 mkdir -p data
 node dist/server/index.mjs
 ```
@@ -89,3 +77,5 @@ node dist/server/index.mjs
 ### Step 5. 접속
 
 http://localhost:3000 (admin / admin)
+
+로그인 후 `서버 > 대상 서버`에서 원격 Gateway를 등록하세요.
