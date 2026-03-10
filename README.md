@@ -18,25 +18,16 @@ npm run dev
 
 Open http://localhost:3000
 
-## Run Like Grafana (Docker)
+## Docker Run
 
-No source clone or `cd` required once the image is published.
+Use a local build (or your private registry image).
 
 ```bash
+docker build -t openclaw-web-manager:local .
 docker run -d --name owm-server \
   -p 3000:3000 \
   -v owm-data:/app/data \
-  ghcr.io/dev-gy/openclaw-web-manager:latest
-```
-
-No env vars required. On first boot, OWM auto-generates runtime secrets and stores them in `/app/data/runtime.env`.
-Default login is `admin / admin` (change it after first login).
-
-Check:
-
-```bash
-docker logs -f owm-server
-curl http://127.0.0.1:3000/api/health
+  openclaw-web-manager:local
 ```
 
 ## Project Structure

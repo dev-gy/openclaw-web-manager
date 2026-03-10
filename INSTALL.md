@@ -1,12 +1,13 @@
 # OWM (OpenClaw Web Manager) 설치 가이드
 
-## 방법 A. Docker One-liner (Grafana 스타일)
+## 방법 A. Docker One-liner (로컬 빌드 이미지)
 
 ```bash
+docker build -t openclaw-web-manager:local .
 docker run -d --name owm-server \
   -p 3000:3000 \
   -v owm-data:/app/data \
-  ghcr.io/dev-gy/openclaw-web-manager:latest
+  openclaw-web-manager:local
 ```
 
 환경변수 없이 실행 가능합니다.  
@@ -23,12 +24,12 @@ curl http://127.0.0.1:3000/api/health
 업데이트:
 
 ```bash
-docker pull ghcr.io/dev-gy/openclaw-web-manager:latest
+docker build -t openclaw-web-manager:local .
 docker rm -f owm-server
 docker run -d --name owm-server \
   -p 3000:3000 \
   -v owm-data:/app/data \
-  ghcr.io/dev-gy/openclaw-web-manager:latest
+  openclaw-web-manager:local
 ```
 
 ---
