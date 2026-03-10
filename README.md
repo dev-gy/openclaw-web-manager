@@ -25,11 +25,12 @@ No source clone or `cd` required once the image is published.
 ```bash
 docker run -d --name owm-server \
   -p 3000:3000 \
-  -e OWM_COOKIE_SECRET='replace-with-long-random-secret' \
-  -e OWM_ADMIN_PASS='replace-admin-password' \
   -v owm-data:/app/data \
   ghcr.io/dev-gy/openclaw-web-manager:latest
 ```
+
+No env vars required. On first boot, OWM auto-generates runtime secrets and stores them in `/app/data/runtime.env`.
+Default login is `admin / admin` (change it after first login).
 
 Check:
 

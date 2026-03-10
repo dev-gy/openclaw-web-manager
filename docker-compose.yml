@@ -10,8 +10,8 @@
 # 환경변수 (.env 파일 또는 쉘에서 설정):
 #   OWM_GATEWAY_TOKEN   - 게이트웨이 인증 토큰 (미설정시 자동 생성)
 #   OWM_GATEWAY_PORT    - 게이트웨이 포트 (기본: 18789)
-#   OWM_COOKIE_SECRET   - 세션 쿠키 암호화 키 (프로덕션 필수)
-#   OWM_ADMIN_PASS      - 초기 관리자 비밀번호 (기본: admin)
+#   OWM_COOKIE_SECRET   - 세션 쿠키 암호화 키 (미설정시 자동 생성/보존)
+#   OWM_ADMIN_PASS      - 초기 관리자 비밀번호 (미설정시 admin)
 #   OWM_PORT            - 웹 UI 포트 (기본: 3000)
 #   ANTHROPIC_API_KEY   - Anthropic (Claude) API 키
 #   OPENAI_API_KEY      - OpenAI (GPT) API 키
@@ -33,8 +33,9 @@ services:
       - PORT=3000
       - HOST=0.0.0.0
       - OWM_DB_PATH=/app/data/owm.db
-      - OWM_COOKIE_SECRET=${OWM_COOKIE_SECRET:-change-me-in-production}
-      - OWM_ADMIN_PASS=${OWM_ADMIN_PASS:-admin}
+      # Optional: set if you want a fixed bootstrap value.
+      - OWM_COOKIE_SECRET=${OWM_COOKIE_SECRET:-}
+      - OWM_ADMIN_PASS=${OWM_ADMIN_PASS:-}
       - OWM_GATEWAY_TOKEN=${OWM_GATEWAY_TOKEN:-}
       - OWM_GATEWAY_PORT=${OWM_GATEWAY_PORT:-18789}
       # LLM API 키 (최소 하나 필수 — 미설정시 데모 모드)

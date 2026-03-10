@@ -5,11 +5,12 @@
 ```bash
 docker run -d --name owm-server \
   -p 3000:3000 \
-  -e OWM_COOKIE_SECRET='replace-with-long-random-secret' \
-  -e OWM_ADMIN_PASS='replace-admin-password' \
   -v owm-data:/app/data \
   ghcr.io/dev-gy/openclaw-web-manager:latest
 ```
+
+환경변수 없이 실행 가능합니다.  
+첫 실행 시 필요한 값은 자동 생성되어 `/app/data/runtime.env`에 저장됩니다.
 
 로그/상태:
 
@@ -26,8 +27,6 @@ docker pull ghcr.io/dev-gy/openclaw-web-manager:latest
 docker rm -f owm-server
 docker run -d --name owm-server \
   -p 3000:3000 \
-  -e OWM_COOKIE_SECRET='replace-with-long-random-secret' \
-  -e OWM_ADMIN_PASS='replace-admin-password' \
   -v owm-data:/app/data \
   ghcr.io/dev-gy/openclaw-web-manager:latest
 ```

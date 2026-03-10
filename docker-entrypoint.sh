@@ -5,6 +5,31 @@ echo "======================================"
 echo "  OpenClaw Web Manager v0.1.0"
 echo "======================================"
 
+# ── 런타임 환경 자동 생성/보존 ──
+RUNTIME_ENV_FILE="/app/data/runtime.env"
+
+if [ -f "$RUNTIME_ENV_FILE" ]; then
+  # shellcheck disable=SC1090
+  . "$RUNTIME_ENV_FILE"
+fi
+
+if [ -z "${OWM_COOKIE_SECRET:-}" ]; then
+  OWM_COOKIE_SECRET="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 48 | head -n1)"
+fi
+
+if [ -z "${OWM_ADMIN_PASS:-}" ]; then
+  OWM_ADMIN_PASS="admin"
+fi
+
+mkdir -p /app/data
+cat > "$RUNTIME_ENV_FILE" <<EOF
+OWM_COOKIE_SECRET=$OWM_COOKIE_SECRET
+OWM_ADMIN_PASS=$OWM_ADMIN_PASS
+EOF
+
+export OWM_COOKIE_SECRET
+export OWM_ADMIN_PASS
+
 # ── 게이트웨이 토큰 ──
 GATEWAY_TOKEN="${OWM_GATEWAY_TOKEN:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n1)}"
 GATEWAY_PORT="${OWM_GATEWAY_PORT:-18789}"
@@ -13,6 +38,9 @@ echo "[OWM] Gateway port : ${GATEWAY_PORT}"
 echo "[OWM] Gateway token: ${GATEWAY_TOKEN:0:4}****"
 echo "[OWM] OWM port     : ${PORT:-3000}"
 echo "[OWM] DB path      : ${OWM_DB_PATH:-/app/data/owm.db}"
+echo "[OWM] Admin user   : admin"
+echo "[OWM] Admin pass   : ${OWM_ADMIN_PASS:0:2}****"
+echo "[OWM] Cookie secret: ${OWM_COOKIE_SECRET:0:4}****"
 
 # ── LLM API 키 상태 ──
 if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
